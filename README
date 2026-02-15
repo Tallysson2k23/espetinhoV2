@@ -1,0 +1,22 @@
+/espetinho/
+│
+├── index.php            (login)
+├── dashboard.php       (tela mesas)
+│
+├── /config/
+│   └── conexao.php
+│
+├── /api/
+│   ├── login.php
+│   ├── mesas.php
+│   ├── pedidos.php
+│
+├── /admin/
+│
+├── /garcom/
+│
+├── /css/
+├── /js/
+----------------------------
+usuario: admin
+senha: 123456

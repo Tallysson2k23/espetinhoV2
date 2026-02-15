@@ -207,15 +207,47 @@ body{
 
 }
 
+.topbar{
+
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:60px;
+    background:#2c3e50;
+    color:white;
+
+    display:flex;
+    align-items:center;
+
+    font-size:18px;
+    font-weight:bold;
+
+    z-index:1100;
+
+}
+
+
 
 </style>
 
 </head>
 
 <body>
-    <div class="topbar">
-Espetinho Central
+
+
+<div class="topbar">
+
+    <div style="position:absolute; left:60px;">
+        Espetinho Central
+    </div>
+
+    <div class="topbar-right" id="contadorMesas" style="position:absolute; right:15px;">
+    </div>
+
 </div>
+
+
 
 
 <button class="menuBtn" onclick="toggleMenu(event)">☰</button>
@@ -243,6 +275,14 @@ Espetinho Central
 <?php if($nivel == "admin"): ?>
 <a href="admin/index.php">Admin</a>
 <?php endif; ?>
+
+<?php if($nivel == "admin"): ?>
+
+<a href="admin/usuarios.php">Usuários</a>
+
+<?php endif; ?>
+
+
 
 <a href="logout.php">Sair</a>
 
@@ -371,6 +411,34 @@ function carregarMesas(){
     });
 
 }
+
+function atualizarContador(){
+
+    fetch("api/listar_mesas.php")
+    .then(res=>res.json())
+    .then(mesas=>{
+
+        let livres = 0;
+        let ocupadas = 0;
+
+        mesas.forEach(m=>{
+
+            if(m.status == "livre") livres++;
+            else ocupadas++;
+
+        });
+
+        document.getElementById("contadorMesas").innerHTML =
+            "🟢 " + livres + " | 🔴 " + ocupadas;
+
+    });
+
+}
+
+setInterval(atualizarContador,2000);
+
+atualizarContador();
+
 
 setInterval(carregarMesas,2000);
 

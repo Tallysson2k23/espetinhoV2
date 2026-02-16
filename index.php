@@ -29,15 +29,26 @@ body{
 
 .login-box{
     background:white;
-    padding:30px;
-    border-radius:10px;
+    padding:40px;
+    border-radius:20px;
     width:300px;
 }
 
 input{
+
     width:100%;
-    padding:10px;
-    margin-top:10px;
+
+    padding:12px;
+
+    margin-top:15px;
+
+    border-radius:6px;
+    border:1px solid #ccc;
+
+    box-sizing:border-box; 
+
+    font-size:15px;
+
 }
 
 button{

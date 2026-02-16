@@ -227,6 +227,76 @@ body{
 
 }
 
+.modal-bg{
+
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.5);
+
+    display:none;
+    justify-content:center;
+    align-items:center;
+
+    z-index:2000;
+
+}
+
+.modal{
+
+    background:white;
+    padding:20px;
+    border-radius:8px;
+    width:250px;
+
+}
+
+.modal-title{
+
+    font-size:20px;
+    margin-bottom:15px;
+    text-align:center;
+
+}
+
+.modal-btn{
+
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+
+}
+
+.abrir{
+
+    background:#27ae60;
+    color:white;
+
+}
+
+.fechar{
+
+    background:#e74c3c;
+    color:white;
+
+}
+
+.cancelar{
+
+    background:#7f8c8d;
+    color:white;
+
+}
+
+.ver{
+    background:#3498db;
+    color:white;
+}
 
 
 </style>
@@ -324,29 +394,122 @@ function fecharMenu(){
 
 }
 
-function clicarMesa(mesa_id){
+let mesaSelecionada = null;
 
-    let nivel = "<?php echo $nivel; ?>";
+function clicarMesa(id){
 
-    if(nivel == "admin"){
+    mesaSelecionada = id;
 
-        if(confirm("OK = Abrir Pedido\nCancelar = Fechar Mesa")){
+    fetch("api/listar_mesas.php")
+    .then(res=>res.json())
+    .then(mesas=>{
 
-            abrirMesa(mesa_id);
+        let mesa = mesas.find(m=>m.id == id);
 
-        }else{
+        if(!mesa){
 
-            buscarPedido(mesa_id);
+            alert("Mesa não encontrada");
+            return;
 
         }
 
-    }else{
+        document.getElementById("modalTitulo").innerText =
+            "Mesa " + mesa.numero;
 
-        abrirMesa(mesa_id);
+        let nivel = "<?php echo $_SESSION['usuario_nivel']; ?>";
+
+        // botão ver pedidos
+        if(mesa.status == "ocupada"){
+
+            document.getElementById("btnVerPedidos").style.display="block";
+
+        }else{
+
+            document.getElementById("btnVerPedidos").style.display="none";
+
+        }
+
+        // botão fechar mesa
+        if(mesa.status=="ocupada" && nivel=="admin"){
+
+            document.getElementById("btnFecharMesa").style.display="block";
+
+        }else{
+
+            document.getElementById("btnFecharMesa").style.display="none";
+
+        }
+
+        document.getElementById("modalBg").style.display="flex";
+
+    });
+
+}
+
+
+function fecharModal(){
+
+    document.getElementById("modalBg").style.display = "none";
+
+}
+
+function abrirPedidoModal(){
+
+    if(!mesaSelecionada){
+
+        alert("Mesa não selecionada");
+        return;
 
     }
 
+    let form = new FormData();
+
+    form.append("mesa_id", String(mesaSelecionada));
+
+    fetch("api/abrir_pedido.php",{
+
+        method:"POST",
+        body:form
+
+    })
+    .then(res=>res.json())
+    .then(data=>{
+
+        console.log(data);
+
+        if(data.success){
+
+window.location="pedido.php?id="+data.pedido_id+"&mesa_id="+mesaSelecionada;
+
+        }else{
+
+            alert(data.erro);
+
+        }
+
+    })
+    .catch(error=>{
+
+        console.log(error);
+        alert("Erro de conexão");
+
+    });
+
 }
+
+
+function fecharMesaModal(){
+
+    fetch("api/buscar_pedido.php?mesa_id="+mesaSelecionada)
+    .then(res=>res.json())
+    .then(data=>{
+
+        window.location="fechar_mesa.php?pedido_id="+data.pedido_id;
+
+    });
+
+}
+
 
 function buscarPedido(mesa_id){
 
@@ -439,10 +602,46 @@ setInterval(atualizarContador,2000);
 
 atualizarContador();
 
+function verPedidosModal(){
+
+window.location="ver_pedido.php?mesa_id="+mesaSelecionada;
+
+}
+
 
 setInterval(carregarMesas,2000);
 
 </script>
+<div class="modal-bg" id="modalBg">
+
+    <div class="modal">
+
+        <div class="modal-title" id="modalTitulo">
+            Mesa
+        </div>
+
+        <button class="modal-btn abrir" onclick="abrirPedidoModal()">
+            Abrir Pedido
+        </button>
+
+<button class="modal-btn ver" id="btnVerPedidos" onclick="verPedidosModal()">
+Ver Pedidos
+</button>
+
+
+
+        <button class="modal-btn fechar" id="btnFecharMesa" onclick="fecharMesaModal()">
+            Fechar Mesa
+        </button>
+
+        <button class="modal-btn cancelar" onclick="fecharModal()">
+            Cancelar
+        </button>
+
+    </div>
+
+</div>
+
 
 </body>
 </html>

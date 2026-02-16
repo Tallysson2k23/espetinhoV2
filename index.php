@@ -70,6 +70,11 @@ button:hover{
     margin-top:10px;
 }
 
+h2 {
+    text-align: center;
+    color: #2c3e50;
+}
+
 </style>
 
 </head>

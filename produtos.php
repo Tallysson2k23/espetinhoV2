@@ -4,12 +4,11 @@ session_start();
 
 require "config/conexao.php";
 
-
 $pedido_id = intval($_GET['pedido_id']);
-$grupo_id = intval($_GET['grupo_id']);
+$grupo_id  = intval($_GET['grupo_id']);
 $mesa_id   = intval($_GET['mesa_id']);
 
-// ✅ verificar se pedido ainda existe e está aberto
+/* verificar se pedido ainda existe */
 
 $sql = "
 SELECT id
@@ -25,8 +24,6 @@ $stmt->execute([
 ]);
 
 if(!$stmt->fetch()){
-
-    // recriar pedido automaticamente
 
     $sql = "
     INSERT INTO pedidos
@@ -44,20 +41,20 @@ if(!$stmt->fetch()){
     ]);
 
     $pedido_id = $stmt->fetchColumn();
-
 }
 
+/* buscar produtos */
 
-$sql = "SELECT * FROM produtos 
-        WHERE grupo_id = :grupo_id
-        AND ativo=TRUE
-        ORDER BY nome";
+$sql = "
+SELECT *
+FROM produtos
+WHERE grupo_id=:grupo_id
+AND ativo=TRUE
+ORDER BY nome
+";
 
 $stmt = $pdo->prepare($sql);
-
-$stmt->bindParam(":grupo_id",$grupo_id);
-
-$stmt->execute();
+$stmt->execute([":grupo_id"=>$grupo_id]);
 
 $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -78,7 +75,6 @@ body{
     font-family:Arial;
     background:#ecf0f1;
     margin:0;
-    padding-bottom:80px;
 }
 
 /* TOPBAR */
@@ -87,107 +83,12 @@ body{
     background:#2c3e50;
     color:white;
     padding:15px;
-    text-align:center;
-    font-size:18px;
-}
-
-/* PRODUTO */
-
-.produto{
-    background:white;
-    padding:18px;
-    border-bottom:1px solid #ddd;
-    cursor:pointer;
-}
-
-.produto:hover{
-    background:#f8f8f8;
-}
-
-/* CARRINHO BAR */
-
-.carrinho-bar{
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    background:#27ae60;
-    color:white;
-    padding:15px;
-    display:flex;
-    justify-content:space-between;
-    cursor:pointer;
-}
-
-/* MODAL */
-
-.modal-bg{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.5);
-    display:none;
-    justify-content:center;
-    align-items:center;
-}
-
-.modal{
-    background:white;
-    padding:20px;
-    border-radius:8px;
-    width:250px;
-    text-align:center;
-}
-
-.qtd-controls{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    margin:15px 0;
-}
-
-.qtd-btn{
-    padding:10px;
-    font-size:18px;
-    margin:5px;
-    cursor:pointer;
-}
-
-.add-btn{
-    background:#27ae60;
-    color:white;
-    border:none;
-    padding:12px;
-    width:100%;
-    border-radius:5px;
-}
-
-.cancel-btn{
-    background:#7f8c8d;
-    color:white;
-    border:none;
-    padding:12px;
-    width:100%;
-    border-radius:5px;
-    margin-top:5px;
-}
-
-.topo{
-
-    background:#2c3e50;
-    color:white;
-    padding:15px;
     display:flex;
     align-items:center;
-    font-size:18px;
     font-weight:bold;
-
 }
 
 .btn-voltar{
-
     background:#34495e;
     color:white;
     border:none;
@@ -195,25 +96,151 @@ body{
     border-radius:5px;
     cursor:pointer;
     margin-right:10px;
+}
+
+.titulo{
+    flex:1;
+    text-align:center;
+    margin-right:40px;
+}
+
+/* PRODUTO CARD */
+
+.produto{
+
+    display:flex;
+    align-items:center;
+    gap:15px;
+
+    background:white;
+    padding:15px;
+    border-bottom:1px solid #ddd;
+    cursor:pointer;
+
+}
+
+.produto:hover{
+    background:#f8f8f8;
+}
+
+.produto img{
+
+    width:60px;
+    height:60px;
+    border-radius:8px;
+    object-fit:cover;
+
+}
+
+.produto-info{
+
+    flex:1;
+
+}
+
+.produto-nome{
+
+    font-weight:bold;
     font-size:16px;
 
 }
 
-.btn-voltar:hover{
+.produto-preco{
 
-    background:#3d566e;
+    color:#27ae60;
+    font-weight:bold;
+    margin-top:5px;
 
 }
 
-.titulo{
+/* CARRINHO */
 
-    flex:1;
+.carrinho-bar{
+
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+
+    background:#27ae60;
+    color:white;
+
+    padding:15px;
+
+    display:flex;
+    justify-content:center;
+
+    font-weight:bold;
+    cursor:pointer;
+
+}
+
+/* MODAL */
+
+.modal-bg{
+
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+
+    background:rgba(0,0,0,0.5);
+
+    display:none;
+    justify-content:center;
+    align-items:center;
+
+}
+
+.modal{
+
+    background:white;
+    padding:20px;
+    border-radius:8px;
+    width:260px;
     text-align:center;
-    margin-right:40px;
 
 }
 
+.qtd-controls{
 
+    display:flex;
+    justify-content:center;
+    margin:15px 0;
+
+}
+
+.qtd-btn{
+
+    padding:10px;
+    font-size:18px;
+    margin:5px;
+
+}
+
+.add-btn{
+
+    background:#27ae60;
+    color:white;
+    border:none;
+    padding:12px;
+    width:100%;
+    border-radius:5px;
+
+}
+
+.cancel-btn{
+
+    background:#7f8c8d;
+    color:white;
+    border:none;
+    padding:12px;
+    width:100%;
+    border-radius:5px;
+    margin-top:5px;
+
+}
 
 </style>
 
@@ -225,9 +252,9 @@ body{
 
 <button class="btn-voltar" onclick="voltarPedido()">←</button>
 
-<span class="titulo">
+<div class="titulo">
 Selecionar Produto
-</span>
+</div>
 
 </div>
 
@@ -242,11 +269,19 @@ onclick="abrirModal(
 '<?php echo addslashes($produto['nome']); ?>'
 )">
 
+<img src="uploads/<?php echo $produto['imagem'] ?: 'sem_imagem.png'; ?>">
+
+<div class="produto-info">
+
+<div class="produto-nome">
 <?php echo $produto['nome']; ?>
+</div>
 
-<br>
-
+<div class="produto-preco">
 R$ <?php echo number_format($produto['preco'],2,',','.'); ?>
+</div>
+
+</div>
 
 </div>
 
@@ -254,13 +289,14 @@ R$ <?php echo number_format($produto['preco'],2,',','.'); ?>
 
 </div>
 
-<div class="carrinho-bar"
-onclick="window.location='carrinho.php?pedido_id=<?php echo $pedido_id; ?>&mesa_id=<?php echo $mesa_id; ?>'"
->
+
+<div class="carrinho-bar" id="carrinhoBar"
+onclick="window.location='carrinho.php?pedido_id=<?php echo $pedido_id; ?>&mesa_id=<?php echo $mesa_id; ?>'">
 
 🛒 Ver Carrinho
 
 </div>
+
 
 <!-- MODAL -->
 
@@ -281,20 +317,17 @@ onclick="window.location='carrinho.php?pedido_id=<?php echo $pedido_id; ?>&mesa_
 </div>
 
 <button class="add-btn" onclick="confirmar()">
-
 Adicionar
-
 </button>
 
 <button class="cancel-btn" onclick="fecharModal()">
-
 Cancelar
-
 </button>
 
 </div>
 
 </div>
+
 
 <script>
 
@@ -311,11 +344,19 @@ document.getElementById("produtoNome").innerText=nome;
 
 document.getElementById("modal").style.display="flex";
 
+/* esconder carrinho */
+
+document.getElementById("carrinhoBar").style.display="none";
+
 }
 
 function fecharModal(){
 
 document.getElementById("modal").style.display="none";
+
+/* mostrar carrinho novamente */
+
+document.getElementById("carrinhoBar").style.display="flex";
 
 }
 
@@ -347,8 +388,6 @@ form.append("quantidade",quantidade);
 
 fetch("api/adicionar_item.php",{
 
-
-
 method:"POST",
 body:form
 
@@ -356,58 +395,22 @@ body:form
 .then(res=>res.json())
 .then(data=>{
 
-    if(data.success){
+if(data.success){
 
-        fecharModal();
+// redireciona para tela do pedido
+window.location.href =
+"pedido.php?id=<?php echo $pedido_id; ?>&mesa_id=<?php echo $mesa_id; ?>";
 
-    }else{
+}else{
 
-        // se pedido não existir mais, criar novo automaticamente
-
-        if(data.erro.includes("Pedido não existe")){
-
-            recriarPedido();
-
-        }else{
-
-            alert(data.erro);
-
-        }
-
-    }
-
-});
+alert(data.erro);
 
 }
 
-function recriarPedido(){
-
-let form = new FormData();
-
-form.append("mesa_id","<?php echo $mesa_id; ?>");
-
-fetch("api/abrir_pedido.php",{
-
-
-
-method:"POST",
-body:form
-
 })
-.then(res=>res.json())
-.then(data=>{
+.catch(()=>{
 
-    if(data.success){
-
-        // redireciona para novo pedido
-       window.location="pedido.php?id="+data.pedido_id;
-
-
-    }else{
-
-        alert("Erro ao recriar pedido");
-
-    }
+alert("Erro de conexão");
 
 });
 
@@ -419,7 +422,6 @@ function voltarPedido(){
 window.location="pedido.php?id=<?php echo $pedido_id; ?>&mesa_id=<?php echo $mesa_id; ?>";
 
 }
-
 
 </script>
 

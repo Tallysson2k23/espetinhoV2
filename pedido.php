@@ -9,8 +9,6 @@ if(!isset($_SESSION['usuario_id'])){
 
 require "config/conexao.php";
 
-/* VALIDAR PEDIDO */
-
 if(!isset($_GET['id'])){
     header("Location: dashboard.php");
     exit;
@@ -19,30 +17,26 @@ if(!isset($_GET['id'])){
 $pedido_id = intval($_GET['id']);
 $mesa_id   = intval($_GET['mesa_id'] ?? 0);
 
-/* BUSCAR mesa_id SE NÃO VEIO */
-
 if($mesa_id <= 0){
 
-    $sql = "SELECT mesa_id FROM pedidos WHERE id=:pedido_id LIMIT 1";
+$sql = "SELECT mesa_id FROM pedidos WHERE id=:pedido_id LIMIT 1";
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ":pedido_id"=>$pedido_id
-    ]);
+$stmt = $pdo->prepare($sql);
 
-    $mesa_id = $stmt->fetchColumn();
+$stmt->execute([
+":pedido_id"=>$pedido_id
+]);
 
-    if(!$mesa_id){
-        echo "Pedido inválido.";
-        exit;
-    }
+$mesa_id = $stmt->fetchColumn();
 
 }
 
 /* BUSCAR GRUPOS */
 
 $sql = "SELECT * FROM grupos WHERE ativo=TRUE ORDER BY nome";
+
 $stmt = $pdo->query($sql);
+
 $grupos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
@@ -52,184 +46,326 @@ $grupos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
 
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Pedido</title>
 
 <style>
 
-body{
-    font-family:Arial;
-    background:#ecf0f1;
-    margin:0;
+/* GERAL */
 
-    /* IMPORTANTE PARA NÃO CORTAR */
-    padding-bottom:140px;
+body{
+
+font-family:Arial;
+background:#f4f6f8;
+margin:0;
+padding-bottom:140px;
+
 }
 
-/* TOPBAR */
+/* TOPO */
 
 .topo{
-    background:#2c3e50;
-    color:white;
-    padding:15px;
-    display:flex;
-    align-items:center;
-    font-size:18px;
-    font-weight:bold;
-}
-
-.btn-voltar{
-    background:#34495e;
-    color:white;
-    border:none;
-    padding:8px 12px;
-    border-radius:5px;
-    cursor:pointer;
-    margin-right:10px;
-}
-
-.btn-voltar:hover{
-    background:#3d566e;
-}
-
-.titulo{
-    flex:1;
-    text-align:center;
-    margin-right:40px;
-}
-
-/* GRUPOS */
-
-.grupo{
-    background:white;
-    padding:18px;
-    border-bottom:1px solid #ddd;
-    cursor:pointer;
-    font-size:18px;
-}
-
-.grupo:hover{
-    background:#f8f8f8;
-}
-
-/* ITENS */
-
-#itensCarrinho{
-    margin-bottom:10px;
-}
-
-.item-carrinho{
-    background:white;
-    padding:12px;
-    border-bottom:1px solid #ddd;
-}
-
-.item-nome{
-    font-weight:bold;
-}
-
-.item-info{
-    font-size:14px;
-    color:#666;
-}
-
-/* BOTÃO ENVIAR */
-
-.btn-enviar{
-
-    position:fixed;
-    bottom:60px;
-    left:0;
-    width:100%;
-
-    background:#e67e22;
-    color:white;
-
-    padding:15px;
-
-    border:none;
-
-    font-size:18px;
-    font-weight:bold;
-
-    cursor:pointer;
-
-    box-sizing:border-box;
-
-    z-index:999;
-}
-
-/* CARRINHO */
-
-.carrinho-bar{
-
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-
-    background:#27ae60;
-    color:white;
-
-    padding:15px 20px;
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-    font-size:16px;
-    cursor:pointer;
-
-    box-sizing:border-box;
-
-    z-index:1000;
-}
-
-.carrinho-bar:hover{
-    background:#219150;
-}
-
-
-.secao-titulo{
-
-padding:10px;
-background:#ddd;
-font-weight:bold;
-margin-top:10px;
-
-}
-
-.item-carrinho{
-
-background:white;
-margin:10px;
-padding:12px;
-border-radius:8px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-
-}
-
-.total-box{
-
-position:fixed;
-bottom:110px;
-left:0;
-width:100%;
 
 background:#2c3e50;
 color:white;
 
 padding:15px;
 
+display:flex;
+align-items:center;
+
 font-size:18px;
 font-weight:bold;
 
+box-shadow:0 2px 5px rgba(0,0,0,0.2);
+
+}
+
+.btn-voltar{
+
+background:#34495e;
+color:white;
+
+border:none;
+
+padding:8px 12px;
+
+border-radius:6px;
+
+cursor:pointer;
+
+margin-right:10px;
+
+}
+
+.titulo{
+
+flex:1;
 text-align:center;
+margin-right:40px;
+
+}
+
+/* CATEGORIAS BONITAS */
+
+.categorias{
+
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(125px,1fr));
+gap:15px;
+padding:15px;
 
 }
 
 
+.categoria{
+
+background:white;
+border-radius:16px;
+
+cursor:pointer;
+
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
+
+transition:0.2s;
+
+overflow:hidden;
+
+display:flex;
+flex-direction:column;
+
+}
+
+.categoria-img{
+
+width:100%;
+height:100px;
+
+}
+
+.categoria-img img{
+
+width:100%;
+height:100%;
+
+object-fit:cover;
+
+display:block;
+
+}
+
+.categoria-nome{
+
+padding:12px 8px;
+
+font-weight:bold;
+
+background:white;
+
+text-align:center;     /* ⭐ CENTRALIZA */
+
+font-size:15px;
+
+display:flex;          /* ⭐ CENTRALIZA VERTICAL */
+align-items:center;
+justify-content:center;
+
+}
+
+
+
+.categoria:hover{
+
+transform:translateY(-5px) scale(1.03);
+
+box-shadow:0 8px 20px rgba(0,0,0,0.25);
+
+}
+
+
+.categoria-icon{
+
+font-size:28px;
+margin-bottom:5px;
+
+}
+
+.categoria-nome{
+
+font-weight:bold;
+
+}
+
+/* ITENS */
+
+.secao{
+
+padding:15px;
+
+}
+
+.secao h3{
+
+margin:0 0 10px 0;
+
+}
+
+/* ITEM CARD */
+
+.item{
+
+background:white;
+
+border-radius:12px;
+
+padding:12px;
+
+margin-bottom:10px;
+
+display:flex;
+
+align-items:center;
+
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+
+}
+
+.item img{
+
+width:70px;
+height:70px;
+
+border-radius:10px;
+
+object-fit:cover;
+
+margin-right:12px;
+
+border:1px solid #ddd;
+
+}
+
+.item-info{
+
+flex:1;
+
+}
+
+.item-nome{
+
+font-weight:bold;
+
+font-size:16px;
+
+}
+
+.item-qtd{
+
+font-size:13px;
+
+color:#777;
+
+margin-top:3px;
+
+}
+
+.item-preco{
+
+font-weight:bold;
+
+color:#27ae60;
+
+font-size:16px;
+
+}
+
+/* TOTAL */
+
+.total-box{
+
+position:fixed;
+
+bottom:55px;
+
+left:0;
+
+width:100%;
+
+background:white;
+
+padding:15px 20px;
+
+font-size:18px;
+
+font-weight:bold;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+box-shadow:0 -2px 10px rgba(0,0,0,0.15);
+
+box-sizing:border-box; /* ⭐ evita corte */
+
+z-index:999;
+
+}
+
+
+/* BOTÃO */
+
+.btn-enviar{
+
+position:fixed;
+
+bottom:0;
+
+left:0;
+
+width:100%;
+
+background:#27ae60;
+
+color:white;
+
+padding:18px 20px;
+
+font-size:18px;
+
+font-weight:bold;
+
+border:none;
+
+cursor:pointer;
+
+box-sizing:border-box; /* ⭐ evita corte */
+
+z-index:1000;
+
+}
+
+
+.btn-enviar:hover{
+
+background:#219150;
+
+}
+
+/* VAZIO */
+
+.vazio{
+
+text-align:center;
+
+color:#777;
+
+margin-top:20px;
+
+}
 
 </style>
 
@@ -241,23 +377,49 @@ text-align:center;
 
 <button class="btn-voltar" onclick="voltarMesas()">←</button>
 
-<span class="titulo">
+<div class="titulo">
 Pedido #<?php echo $pedido_id; ?>
-</span>
+</div>
 
 </div>
 
 
-<!-- GRUPOS -->
+<!-- CATEGORIAS -->
 
-<div>
+<div class="categorias">
 
 <?php foreach($grupos as $grupo): ?>
 
-<div class="grupo"
+<div class="categoria"
+
 onclick="abrirGrupo(<?php echo $grupo['id']; ?>)">
 
+<?php
+
+$nome = strtolower($grupo['nome']);
+
+$imagem = "imagens/categorias/padrao.png";
+
+if(str_contains($nome,"bebida")) $imagem="imagens/categorias/bebidas.png";
+if(str_contains($nome,"espet")) $imagem="imagens/categorias/espetos.png";
+if(str_contains($nome,"por")) $imagem="imagens/categorias/porcoes.png";
+if(str_contains($nome,"suco")) $imagem="imagens/categorias/sucos.png";
+if(str_contains($nome,"cerveja")) $imagem="imagens/categorias/cervejas.png";
+if(str_contains($nome,"almo")) $imagem="imagens/categorias/almoco.png";
+
+?>
+
+<div class="categoria-img">
+
+<img src="<?php echo $imagem; ?>">
+
+</div>
+
+
+
+<div class="categoria-nome">
 <?php echo $grupo['nome']; ?>
+</div>
 
 </div>
 
@@ -266,31 +428,42 @@ onclick="abrirGrupo(<?php echo $grupo['id']; ?>)">
 </div>
 
 
-<!-- ITENS DO CARRINHO -->
-<div class="secao-titulo">
-Itens do Pedido
+<!-- ITENS -->
+
+<div class="secao">
+
+<h3>Itens do Pedido</h3>
+
+<div id="itens"></div>
+
 </div>
 
-<div id="itensCarrinho"></div>
+
+<!-- TOTAL -->
 
 <div class="total-box">
-TOTAL: R$ <span id="totalPedido">0,00</span>
+
+<div>TOTAL</div>
+
+<div>
+R$ <span id="total">0,00</span>
 </div>
 
-<button class="btn-enviar" onclick="enviarPedido()">
+</div>
+
+
+<!-- BOTÃO -->
+
+<button class="btn-enviar"
+
+onclick="enviarPedido()">
+
 ENVIAR PEDIDO
+
 </button>
 
 
-
-<!-- BARRA CARRINHO -->
-
-
-
-
 <script>
-
-/* ABRIR GRUPO */
 
 function abrirGrupo(grupo_id){
 
@@ -299,49 +472,13 @@ window.location =
 
 }
 
-/* ABRIR CARRINHO */
-
-function abrirCarrinho(){
-
-window.location =
-"carrinho.php?pedido_id=<?php echo $pedido_id; ?>&mesa_id=<?php echo $mesa_id; ?>";
-
-}
-
-/* VOLTAR */
-
 function voltarMesas(){
 
 window.location="dashboard.php";
 
 }
 
-/* ATUALIZAR CARRINHO */
-
-function atualizarCarrinho(){
-
-fetch("api/carrinho_status.php?pedido_id=<?php echo $pedido_id; ?>")
-
-.then(res=>res.json())
-
-.then(data=>{
-
-if(data.success){
-
-document.getElementById("qtd").innerText = data.quantidade;
-document.getElementById("total").innerText = data.total;
-document.getElementById("totalPedido").innerText = data.total;
-
-}
-
-})
-
-.catch(()=>{});
-
-}
-
-/* CARREGAR ITENS */
-
+/* CARREGAR ITENS COM FOTO */
 function carregarItens(){
 
 fetch("api/listar_itens_carrinho.php?pedido_id=<?php echo $pedido_id; ?>")
@@ -354,44 +491,72 @@ let html="";
 
 if(!itens || itens.length===0){
 
-html="<div style='padding:15px;color:#777'>Nenhum item no carrinho</div>";
+html="<div class='vazio'>Nenhum item no pedido</div>";
 
 }else{
 
 itens.forEach(item=>{
 
+let img = item.imagem ? item.imagem : "sem_imagem.png";
+
 html+=`
-<div class="item-carrinho">
+
+<div class="item">
+
+<img src="uploads/${img}" onerror="this.src='uploads/sem_imagem.png'">
+
+<div class="item-info">
 
 <div class="item-nome">
 ${item.nome}
 </div>
 
-<div class="item-info">
-Qtd: ${item.quantidade}  
+<div class="item-qtd">
+Qtd: ${item.quantidade}
+</div>
+
+</div>
+
+<div class="item-preco">
 R$ ${item.total}
 </div>
 
 </div>
+
 `;
 
 });
 
 }
 
-document.getElementById("itensCarrinho").innerHTML=html;
-
-})
-
-.catch(()=>{
-
-document.getElementById("itensCarrinho").innerHTML="";
+document.getElementById("itens").innerHTML=html;
 
 });
 
 }
 
-/* ENVIAR PEDIDO */
+
+/* TOTAL */
+
+function atualizarTotal(){
+
+fetch("api/carrinho_status.php?pedido_id=<?php echo $pedido_id; ?>")
+
+.then(res=>res.json())
+
+.then(data=>{
+
+if(data.success){
+
+document.getElementById("total").innerText=data.total;
+
+}
+
+});
+
+}
+
+/* ENVIAR */
 
 function enviarPedido(){
 
@@ -406,43 +571,36 @@ pedido_id:"<?php echo $pedido_id; ?>"
 })
 
 })
+
 .then(res=>res.json())
 
 .then(data=>{
 
 if(data.success){
 
-alert("Pedido enviado com sucesso");
+alert("Pedido enviado com sucesso!");
 
 }else{
 
-alert(data.erro || "Erro ao enviar");
+alert(data.erro);
 
 }
-
-carregarItens();
-atualizarCarrinho();
-
-})
-.catch(()=>{
-
-alert("Erro de conexão");
 
 });
 
 }
 
-
 /* AUTO UPDATE */
 
-setInterval(atualizarCarrinho,1000);
 setInterval(carregarItens,1000);
 
-atualizarCarrinho();
+setInterval(atualizarTotal,1000);
+
 carregarItens();
 
-</script>
+atualizarTotal();
 
+</script>
 
 </body>
 </html>

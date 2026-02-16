@@ -47,10 +47,12 @@ $sql = "
 
 SELECT 
 produtos.nome,
+produtos.imagem,
 pedido_itens.quantidade,
 pedido_itens.preco,
 (pedido_itens.quantidade * pedido_itens.preco) as total,
 pedido_itens.status
+
 
 FROM pedido_itens
 
@@ -108,12 +110,42 @@ body{
 
     background:white;
     padding:10px;
-    border-radius:5px;
+    border-radius:8px;
     margin-bottom:10px;
+
     display:flex;
+    align-items:center;
     justify-content:space-between;
 
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+
 }
+
+.card-left{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+}
+
+.card img{
+
+    width:60px;
+    height:60px;
+    border-radius:8px;
+    object-fit:cover;
+    border:1px solid #ddd;
+
+}
+
+.card-info{
+
+    display:flex;
+    flex-direction:column;
+
+}
+
 
 .total{
 
@@ -172,15 +204,23 @@ $total += $item['total'];
 
 <div class="card">
 
-<div>
+<div class="card-left">
 
-<?php echo $item['nome']; ?><br>
+<img src="uploads/<?php echo $item['imagem'] ?: 'sem_imagem.png'; ?>">
 
+<div class="card-info">
+
+<strong>
+<?php echo $item['nome']; ?>
+</strong>
+
+<span>
 Qtd: <?php echo $item['quantidade']; ?>
+</span>
 
 <div class="status">
-
 <?php echo $item['status']; ?>
+</div>
 
 </div>
 
@@ -188,11 +228,14 @@ Qtd: <?php echo $item['quantidade']; ?>
 
 <div>
 
+<strong>
 R$ <?php echo number_format($item['total'],2,',','.'); ?>
+</strong>
 
 </div>
 
 </div>
+
 
 <?php endforeach; ?>
 

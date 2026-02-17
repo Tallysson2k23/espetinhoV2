@@ -22,16 +22,18 @@ $sql = "
 
 SELECT 
 produtos.nome,
+produtos.imagem,
 pedido_itens.quantidade,
 pedido_itens.preco,
 (pedido_itens.quantidade * pedido_itens.preco) as total
 
 FROM pedido_itens
 JOIN produtos ON produtos.id = pedido_itens.produto_id
+
 WHERE pedido_itens.pedido_id = :pedido_id
 
-
 ";
+
 
 $stmt = $pdo->prepare($sql);
 $stmt->bindParam(":pedido_id",$pedido_id);
@@ -105,11 +107,66 @@ body{
 .card{
 
     background:white;
-    padding:15px;
-    border-radius:8px;
+
+    padding:12px;
+
+    border-radius:10px;
+
     margin-bottom:10px;
+
     display:flex;
-    justify-content:space-between;
+    align-items:center;
+
+    gap:12px;
+
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+
+}
+
+/* imagem */
+
+.card img{
+
+    width:60px;
+    height:60px;
+
+    border-radius:8px;
+
+    object-fit:cover;
+
+    border:1px solid #ddd;
+
+}
+
+/* info */
+
+.info{
+
+    flex:1;
+
+}
+
+.nome{
+
+    font-weight:bold;
+    font-size:16px;
+
+}
+
+.qtd{
+
+    color:#777;
+    font-size:13px;
+
+}
+
+/* valor */
+
+.valor{
+
+    font-weight:bold;
+    color:#27ae60;
+    font-size:16px;
 
 }
 
@@ -208,16 +265,27 @@ $total += $item['total'];
 
 <div class="card">
 
-<div>
-<?php echo $item['nome']; ?><br>
+<img src="uploads/<?php echo $item['imagem'] ?: 'sem_imagem.png'; ?>" 
+onerror="this.src='uploads/sem_imagem.png'">
+
+<div class="info">
+
+<div class="nome">
+<?php echo $item['nome']; ?>
+</div>
+
+<div class="qtd">
 Qtd: <?php echo $item['quantidade']; ?>
 </div>
 
-<div>
+</div>
+
+<div class="valor">
 R$ <?php echo number_format($item['total'],2,',','.'); ?>
 </div>
 
 </div>
+
 
 <?php endforeach; ?>
 

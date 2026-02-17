@@ -367,6 +367,33 @@ margin-top:20px;
 
 }
 
+.btn-excluir{
+
+background:#e74c3c;
+
+color:white;
+
+border:none;
+
+padding:6px 10px;
+
+border-radius:6px;
+
+cursor:pointer;
+
+margin-top:5px;
+
+display:block;
+
+}
+
+.btn-excluir:hover{
+
+background:#c0392b;
+
+}
+
+
 </style>
 
 </head>
@@ -518,7 +545,14 @@ Qtd: ${item.quantidade}
 </div>
 
 <div class="item-preco">
+
 R$ ${item.total}
+
+<button class="btn-excluir"
+onclick="excluirItem(${item.id})">
+🗑
+</button>
+
 </div>
 
 </div>
@@ -534,6 +568,7 @@ document.getElementById("itens").innerHTML=html;
 });
 
 }
+
 
 
 /* TOTAL */
@@ -599,6 +634,31 @@ setInterval(atualizarTotal,1000);
 carregarItens();
 
 atualizarTotal();
+
+function excluirItem(id){
+
+if(!confirm("Remover este item?")) return;
+
+let form=new FormData();
+
+form.append("id",id);
+
+fetch("api/excluir_item.php",{
+
+method:"POST",
+body:form
+
+})
+.then(res=>res.json())
+.then(data=>{
+
+carregarItens();
+atualizarTotal();
+
+});
+
+}
+
 
 </script>
 

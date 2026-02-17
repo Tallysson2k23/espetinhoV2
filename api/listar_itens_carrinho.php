@@ -10,6 +10,7 @@ $sql = "
 
 SELECT
 
+pedido_itens.id,
 produtos.nome,
 produtos.imagem,
 

@@ -24,6 +24,7 @@ $nivel = $_SESSION['usuario_nivel'];
 
 <title>Painel de Mesas</title>
 
+
 <style>
 
 body{
@@ -298,6 +299,20 @@ body{
     color:white;
 }
 
+.topo{
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn-sair{
+    background: #e74c3c;
+    color: white;
+    padding: 2px 10px;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+
 
 </style>
 
@@ -316,7 +331,6 @@ body{
     </div>
 
 </div>
-
 
 
 
@@ -640,6 +654,9 @@ Ver Pedidos
 
     </div>
 
+</div>
+<div class="topo">
+    <a href="logout.php" class="btn-sair">Sair</a>
 </div>
 
 

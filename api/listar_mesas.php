@@ -2,7 +2,18 @@
 
 require "../config/conexao.php";
 
-$sql = "SELECT id, numero, status FROM mesas ORDER BY numero";
+$sql = "
+SELECT 
+    m.id,
+    m.numero,
+    m.status,
+    p.data_abertura
+FROM mesas m
+LEFT JOIN pedidos p 
+    ON p.mesa_id = m.id 
+    AND p.status = 'aberto'
+ORDER BY m.numero
+";
 
 $stmt = $pdo->query($sql);
 

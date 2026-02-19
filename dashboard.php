@@ -378,9 +378,15 @@ body{
 
 <?php foreach($mesas as $mesa): ?>
 
-<div class="mesa <?php echo $mesa['status']; ?>" onclick="clicarMesa(<?php echo $mesa['id']; ?>)">
+<div class="mesa <?php echo $mesa['status']; ?>" 
+     onclick="clicarMesa(<?php echo $mesa['id']; ?>)">
 
-Mesa <?php echo $mesa['numero']; ?>
+    Mesa <?php echo $mesa['numero']; ?>
+
+    <div id="timer-<?php echo $mesa['id']; ?>" 
+         style="font-size:12px;margin-top:5px;">
+        ⏱ 00:00:00
+    </div>
 
 </div>
 
@@ -565,25 +571,39 @@ function abrirMesa(mesa_id){
 
 }
 
-function carregarMesas(){
 
-    fetch("api/listar_mesas.php")
-    .then(res=>res.json())
-    .then(mesas=>{
 
-        let html="";
 
-        mesas.forEach(mesa=>{
 
-            html+=`
-            <div class="mesa ${mesa.status}" onclick="clicarMesa(${mesa.id})">
-            Mesa ${mesa.numero}
-            </div>
-            `;
+function atualizarTimers(){
 
-        });
+    Object.keys(horariosMesas).forEach(id=>{
 
-        document.getElementById("areaMesas").innerHTML=html;
+        let abertura = horariosMesas[id];
+
+        let timerDiv = document.getElementById("timer-"+id);
+
+        if(!timerDiv) return;
+
+        if(!abertura){
+            timerDiv.innerHTML = "⏱ 00:00:00";
+            return;
+        }
+
+        let dataAbertura = new Date(abertura.replace(' ', 'T'));
+        let agora = new Date();
+
+        let diff = Math.floor((agora - dataAbertura)/1000);
+
+        let horas = Math.floor(diff/3600);
+        let minutos = Math.floor((diff%3600)/60);
+        let segundos = diff%60;
+
+        timerDiv.innerHTML =
+            "⏱ " +
+            String(horas).padStart(2,'0') + ":" +
+            String(minutos).padStart(2,'0') + ":" +
+            String(segundos).padStart(2,'0');
 
     });
 
@@ -622,9 +642,47 @@ window.location="ver_pedido.php?mesa_id="+mesaSelecionada;
 
 }
 
+let horariosMesas = {};
 
-setInterval(carregarMesas,2000);
+function buscarHorarios(){
 
+    fetch("api/listar_mesas.php")
+    .then(res=>res.json())
+    .then(mesas=>{
+
+        mesas.forEach(mesa=>{
+
+            let mesaDiv = document.querySelector(
+                `.mesa[onclick="clicarMesa(${mesa.id})"]`
+            );
+
+            if(!mesaDiv) return;
+
+            // Atualiza cor da mesa
+            mesaDiv.classList.remove("livre","ocupada");
+            mesaDiv.classList.add(mesa.status);
+
+            // Atualiza horário
+            if(mesa.status == "ocupada" && mesa.data_abertura){
+                horariosMesas[mesa.id] = mesa.data_abertura;
+            } else {
+                horariosMesas[mesa.id] = null;
+            }
+
+        });
+
+    });
+
+}
+
+
+
+buscarHorarios();
+atualizarContador();
+
+setInterval(buscarHorarios,5000);
+setInterval(atualizarTimers,1000);
+setInterval(atualizarContador,5000);
 </script>
 <div class="modal-bg" id="modalBg">
 

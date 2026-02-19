@@ -130,12 +130,12 @@ try{
 
     // inserir item no carrinho
 
-    $sql = "
-    INSERT INTO pedido_itens
-    (pedido_id, produto_id, quantidade, preco, status)
-    VALUES
-    (:pedido_id, :produto_id, :quantidade, :preco, 'carrinho')
-    ";
+  $sql = "
+INSERT INTO pedido_itens
+(pedido_id, produto_id, quantidade, preco, status, observacao)
+VALUES
+(:pedido_id, :produto_id, :quantidade, :preco, 'carrinho', :observacao)
+";
 
     $stmt = $pdo->prepare($sql);
 
@@ -143,7 +143,8 @@ try{
         ":pedido_id"=>$pedido_id,
         ":produto_id"=>$produto_id,
         ":quantidade"=>$quantidade,
-        ":preco"=>$preco
+        ":preco"=>$preco,
+        ":observacao" => $_POST['observacao'] ?? null
     ]);
 
     // marcar mesa como ocupada

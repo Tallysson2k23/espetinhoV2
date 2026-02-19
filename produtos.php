@@ -307,6 +307,7 @@ onclick="window.location='carrinho.php?pedido_id=<?php echo $pedido_id; ?>&mesa_
 <div id="produtoNome"></div>
 
 <div class="qtd-controls">
+    
 
 <button class="qtd-btn" onclick="menos()">−</button>
 
@@ -314,6 +315,12 @@ onclick="window.location='carrinho.php?pedido_id=<?php echo $pedido_id; ?>&mesa_
 
 <button class="qtd-btn" onclick="mais()">+</button>
 
+</div>
+<div style="margin-bottom:10px;">
+    <textarea id="observacao"
+        placeholder="Observação..."
+        style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; resize:none;"
+        rows="2"></textarea>
 </div>
 
 <button class="add-btn" onclick="confirmar()">
@@ -341,6 +348,7 @@ quantidade=1;
 
 document.getElementById("qtd").innerText=quantidade;
 document.getElementById("produtoNome").innerText=nome;
+document.getElementById("observacao").value="";
 
 document.getElementById("modal").style.display="flex";
 
@@ -378,26 +386,27 @@ document.getElementById("qtd").innerText=quantidade;
 
 }
 
+
 function confirmar(){
 
-let form=new FormData();
+let form = new FormData();
 
 form.append("pedido_id","<?php echo $pedido_id; ?>");
 form.append("produto_id",produtoSelecionado);
 form.append("quantidade",quantidade);
 
-fetch("api/adicionar_item.php",{
+let obs = document.getElementById("observacao").value;
+form.append("observacao", obs);
 
+fetch("api/adicionar_item.php",{
 method:"POST",
 body:form
-
 })
 .then(res=>res.json())
 .then(data=>{
 
 if(data.success){
 
-// redireciona para tela do pedido
 window.location.href =
 "pedido.php?id=<?php echo $pedido_id; ?>&mesa_id=<?php echo $mesa_id; ?>";
 
@@ -409,9 +418,7 @@ alert(data.erro);
 
 })
 .catch(()=>{
-
 alert("Erro de conexão");
-
 });
 
 }

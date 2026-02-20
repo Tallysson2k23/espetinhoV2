@@ -489,6 +489,22 @@ ENVIAR PEDIDO
 
 </button>
 
+<div id="msgSucesso" style="
+position:fixed;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+background:#27ae60;
+color:white;
+padding:12px 20px;
+border-radius:8px;
+font-weight:bold;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+display:none;
+z-index:2000;
+">
+Pedido enviado com sucesso!
+</div>
 
 <script>
 
@@ -600,20 +616,17 @@ fetch("api/enviar_pedido.php",{
 method:"POST",
 
 body:new URLSearchParams({
-
 pedido_id:"<?php echo $pedido_id; ?>"
-
 })
 
 })
-
 .then(res=>res.json())
-
 .then(data=>{
 
 if(data.success){
 
-alert("Pedido enviado com sucesso!");
+// 🔵 redireciona passando parâmetro
+window.location.href = "dashboard.php?msg=enviado";
 
 }else{
 
@@ -621,6 +634,9 @@ alert(data.erro);
 
 }
 
+})
+.catch(()=>{
+alert("Erro ao enviar pedido");
 });
 
 }

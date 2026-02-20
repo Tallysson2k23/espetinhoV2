@@ -312,13 +312,62 @@ body{
     border-radius: 6px;
 }
 
+/* TOAST NOTIFICATION */
 
+.toast{
+    position:fixed;
+    top:20px;
+    right:-400px;
+    width:300px;
+    background:#27ae60;
+    color:white;
+    border-radius:10px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.25);
+    overflow:hidden;
+    z-index:5000;
+    animation:slideIn 0.4s forwards;
+}
+
+.toast-content{
+    padding:15px;
+    font-weight:bold;
+}
+
+.toast-bar{
+    height:4px;
+    background:rgba(255,255,255,0.7);
+    width:100%;
+    animation:progressBar 2s linear forwards;
+}
+
+@keyframes slideIn{
+    from{ right:-400px; }
+    to{ right:20px; }
+}
+
+@keyframes slideOut{
+    from{ right:20px; opacity:1; }
+    to{ right:-400px; opacity:0; }
+}
+
+@keyframes progressBar{
+    from{ width:100%; }
+    to{ width:0%; }
+}
 
 </style>
 
 </head>
 
 <body>
+<?php if(isset($_GET['msg']) && $_GET['msg'] == 'enviado'): ?>
+<div id="toast" class="toast">
+    <div class="toast-content">
+        ✔ Pedido enviado com sucesso!
+    </div>
+    <div class="toast-bar"></div>
+</div>
+<?php endif; ?>
 
 
 <div class="topbar">
@@ -717,6 +766,31 @@ Ver Pedidos
     <a href="logout.php" class="btn-sair">Sair</a>
 </div>
 
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+let toast = document.getElementById("toast");
+
+if(toast){
+
+    // remove parâmetro da URL
+    if(window.history.replaceState){
+        let url = new URL(window.location);
+        url.searchParams.delete("msg");
+        window.history.replaceState({}, document.title, url.pathname);
+    }
+
+    // após 3s faz animação de saída
+    setTimeout(function(){
+        toast.style.animation = "slideOut 0.4s forwards";
+        setTimeout(()=> toast.remove(),400);
+    },2000);
+
+}
+
+});
+</script>
 
 </body>
 </html>

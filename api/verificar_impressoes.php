@@ -2,25 +2,10 @@
 
 require "../config/conexao.php";
 
-$pedido_id = $_POST['pedido_id'];
-
-// 1️⃣ Atualiza status
-$sql = "
-UPDATE pedido_itens
-SET status='enviado',
-    impresso = FALSE
-WHERE pedido_id=:pedido_id
-AND status='carrinho'
-";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
-    ":pedido_id" => $pedido_id
-]);
-
-// 2️⃣ Buscar dados do pedido
 $sql = "
 SELECT 
+    pi.id,
+    pi.pedido_id,
     pi.quantidade,
     pi.observacao,
     p.nome as produto,
@@ -32,15 +17,13 @@ JOIN produtos p ON p.id = pi.produto_id
 JOIN grupos g ON g.id = p.grupo_id
 JOIN pedidos pe ON pe.id = pi.pedido_id
 JOIN usuarios u ON u.id = pe.usuario_id
-WHERE pi.pedido_id = :pedido_id
-AND pi.status = 'enviado'
+WHERE pi.status = 'enviado'
+AND pi.impresso = FALSE
+ORDER BY pi.id ASC
+LIMIT 50
 ";
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
-    ":pedido_id" => $pedido_id
-]);
-
+$stmt = $pdo->query($sql);
 $itens = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 echo json_encode([

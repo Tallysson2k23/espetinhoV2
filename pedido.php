@@ -607,9 +607,106 @@ document.getElementById("total").innerText=data.total;
 
 }
 
-/* ENVIAR */
+function getPrinterByGroup(grupo){
+
+grupo = grupo.toUpperCase();
+
+if(grupo === "ALMOÇO" || grupo === "ESPETOS"){
+    return "COZINHA";
+}
+
+if(grupo === "PORÇÕES"){
+    return "PORCOES";
+}
+
+if(grupo === "CERVEJAS" || grupo === "BEBIDAS"){
+    return "BEBIDAS";
+}
+
+if(grupo === "SUCOS"){
+    return "SUCOS";
+}
+
+return null;
+
+}
+
+function gerarCupom(nomeTopo, itensGrupo){
+
+let mesa = itensGrupo[0].mesa_id;
+let garcom = itensGrupo[0].garcom.toUpperCase();
+
+let agora = new Date();
+
+let dataHora =
+agora.getDate().toString().padStart(2,'0') + "/" +
+(agora.getMonth()+1).toString().padStart(2,'0') + "/" +
+agora.getFullYear().toString().slice(-2) + " " +
+agora.getHours().toString().padStart(2,'0') + ":" +
+agora.getMinutes().toString().padStart(2,'0') + ":" +
+agora.getSeconds().toString().padStart(2,'0');
+
+const largura = 32; // padrão 80mm
+
+function centralizar(texto){
+let espacos = Math.floor((largura - texto.length) / 2);
+return " ".repeat(Math.max(0, espacos)) + texto + "\n";
+}
+
+function linha(){
+return "-".repeat(largura) + "\n";
+}
+
+let texto = "";
+
+texto += centralizar(nomeTopo.toUpperCase());
+texto += linha();
+texto += "Mesa: " + mesa + "\n";
+texto += "Atendimento: <?php echo $pedido_id; ?>\n";
+texto += linha();
+texto += "QTD  DESCRIÇÃO\n";
+texto += linha();
+
+itensGrupo.forEach(item => {
+
+let qtd = item.quantidade.toString().padEnd(4, " ");
+let nome = item.produto;
+
+if(nome.length > 26){
+nome = nome.substring(0, 26);
+}
+
+texto += qtd + nome + "\n";
+
+// 🔥 Se tiver observação, imprimir abaixo
+if(item.observacao && item.observacao.trim() !== ""){
+
+let obs = item.observacao.trim();
+
+// quebrar observação longa em linhas
+while(obs.length > 26){
+texto += "     * " + obs.substring(0, 23) + "\n";
+obs = obs.substring(23);
+}
+
+texto += "     * " + obs + "\n";
+}
+
+});
+
+texto += linha();
+texto += "Atendente: " + garcom + "\n";
+texto += dataHora + "\n\n\n";
+
+return texto;
+}
+
 
 function enviarPedido(){
+
+// 🔥 PARAR AUTO UPDATE
+clearInterval(window.intervalItens);
+clearInterval(window.intervalTotal);
 
 fetch("api/enviar_pedido.php",{
 
@@ -625,27 +722,79 @@ pedido_id:"<?php echo $pedido_id; ?>"
 
 if(data.success){
 
-// 🔵 redireciona passando parâmetro
-window.location.href = "dashboard.php?msg=enviado";
+let itens = data.itens;
 
-}else{
+// Separar por grupo
+let grupos = {};
 
-alert(data.erro);
+itens.forEach(item => {
+if(!grupos[item.grupo]){
+grupos[item.grupo] = [];
+}
+grupos[item.grupo].push(item);
+});
 
+let promessas = [];
+
+Object.keys(grupos).forEach(nomeGrupo => {
+
+let impressora = getPrinterByGroup(nomeGrupo);
+
+if(!impressora){
+console.log("Grupo sem impressora:", nomeGrupo);
+return;
 }
 
+let nomeTopo = "";
+
+if(impressora === "COZINHA") nomeTopo = "COZINHA ESPETOS";
+if(impressora === "PORCOES") nomeTopo = "COZINHA PORÇÕES";
+if(impressora === "BEBIDAS") nomeTopo = "BEBIDAS";
+if(impressora === "SUCOS") nomeTopo = "SUCOS";
+
+let textoCupom = gerarCupom(nomeTopo, grupos[nomeGrupo]);
+
+
+//para ver cupom no console do navegador 
+// console.log("CUPOM GERADO:");
+console.log(textoCupom); 
+
+
+let promessa = qz.print(
+    qz.configs.create(impressora),
+    [{
+        type: 'raw',
+        data: textoCupom
+    }]
+);
+
+promessas.push(promessa);
+
+});
+
+// 🔥 Espera TODAS as impressões terminarem
+Promise.all(promessas)
+.then(() => {
+console.log("Todas impressões concluídas");
+window.location.href = "dashboard.php?msg=enviado";
 })
-.catch(()=>{
-alert("Erro ao enviar pedido");
+.catch(err => {
+console.error("Erro na impressão:", err);
+alert("Erro ao imprimir. Verifique o console.");
+});
+
+}else{
+alert(data.erro);
+}
+
 });
 
 }
 
 /* AUTO UPDATE */
 
-setInterval(carregarItens,1000);
-
-setInterval(atualizarTotal,1000);
+window.intervalItens = setInterval(carregarItens,1000);
+window.intervalTotal = setInterval(atualizarTotal,1000);
 
 carregarItens();
 
@@ -677,6 +826,22 @@ atualizarTotal();
 
 
 </script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.3/qz-tray.js"></script>
+
+<script>
+qz.websocket.connect()
+.then(() => {
+    console.log("Conectado ao QZ Tray");
+})
+.catch(err => {
+    console.error("Erro ao conectar com QZ:", err);
+});
+</script>
+
+
 
 </body>
 </html>

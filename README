@@ -20,3 +20,34 @@
 ----------------------------
 usuario: admin
 senha: 123456
+
+Baixe aqui:
+
+https://qz.io/download/
+
+PASSO 2.1 — Baixar biblioteca JS do QZ
+
+Baixe este arquivo:
+
+https://cdn.jsdelivr.net/npm/qz-tray/qz-tray.js
+
+Salve como:
+
+/js/qz-tray.js
+
+
+Quando você for instalar no espetinho, você vai:
+
+Ir em:
+
+Painel de Controle → Dispositivos e Impressoras
+
+Clicar com botão direito na impressora → Renomear
+
+E colocar exatamente:
+
+COZINHA
+PORCOES
+BEBIDAS
+SUCOS
+-----------------------------------

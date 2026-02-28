@@ -11,50 +11,67 @@ try{
         exit;
     }
 
-    if(!isset($_POST['pedido_id']) || 
+    if(!isset($_POST['mesa_id']) || 
        !isset($_POST['produto_id']) || 
        !isset($_POST['quantidade'])){
         echo json_encode(["success"=>false,"erro"=>"Dados incompletos"]);
         exit;
     }
 
-    $pedido_id  = intval($_POST['pedido_id']);
+    $mesa_id    = intval($_POST['mesa_id']);
     $produto_id = intval($_POST['produto_id']);
     $quantidade = intval($_POST['quantidade']);
-  $observacao = isset($_POST['observacao']) 
-    ? trim($_POST['observacao']) 
-    : '';
+    $observacao = isset($_POST['observacao']) ? trim($_POST['observacao']) : '';
 
-if($observacao === ''){
-    $observacao = '';
-}
-
-    if($pedido_id <= 0 || $produto_id <= 0 || $quantidade <= 0){
+    if($mesa_id <= 0 || $produto_id <= 0 || $quantidade <= 0){
         echo json_encode(["success"=>false,"erro"=>"Dados inválidos"]);
         exit;
     }
 
-    // Verifica pedido aberto
-    $sql = "SELECT id, mesa_id 
-            FROM pedidos 
-            WHERE id=:pedido_id AND status='aberto' 
+    /* =======================================
+       VERIFICA SE EXISTE PEDIDO ABERTO
+    ======================================= */
+
+    $sql = "SELECT id FROM pedidos 
+            WHERE mesa_id=:mesa_id 
+            AND status='aberto' 
             LIMIT 1";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([":pedido_id"=>$pedido_id]);
-    $pedido = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->execute([":mesa_id"=>$mesa_id]);
+    $pedido_id = $stmt->fetchColumn();
 
-    if(!$pedido){
-        echo json_encode(["success"=>false,"erro"=>"Pedido fechado ou inexistente"]);
-        exit;
+    $pedido_criado_agora = false;
+
+    /* =======================================
+       SE NÃO EXISTE, CRIA AGORA
+    ======================================= */
+
+    if(!$pedido_id){
+
+        $sql = "
+        INSERT INTO pedidos (mesa_id, usuario_id, status, criado_em)
+        VALUES (:mesa_id, :usuario_id, 'aberto', NOW())
+        RETURNING id
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ":mesa_id"=>$mesa_id,
+            ":usuario_id"=>$_SESSION['usuario_id']
+        ]);
+
+        $pedido_id = $stmt->fetchColumn();
+        $pedido_criado_agora = true;
     }
 
-    $mesa_id = $pedido['mesa_id'];
+    /* =======================================
+       BUSCAR PREÇO DO PRODUTO
+    ======================================= */
 
-    // Buscar preço
-    $sql = "SELECT preco 
-            FROM produtos 
-            WHERE id=:produto_id AND ativo=TRUE 
+    $sql = "SELECT preco FROM produtos 
+            WHERE id=:produto_id 
+            AND ativo=TRUE 
             LIMIT 1";
 
     $stmt = $pdo->prepare($sql);
@@ -68,59 +85,38 @@ if($observacao === ''){
 
     $preco = $produto['preco'];
 
-    // 🔍 Verificar se já existe item igual no carrinho
-    $sql = "SELECT id 
-            FROM pedido_itens
-            WHERE pedido_id = :pedido_id
-            AND produto_id = :produto_id
-            AND status = 'carrinho'
-            AND COALESCE(observacao,'') = COALESCE(:observacao,'')
-            LIMIT 1";
+    /* =======================================
+       INSERE ITEM
+    ======================================= */
+
+    $sql = "INSERT INTO pedido_itens
+            (pedido_id, produto_id, quantidade, preco, status, observacao)
+            VALUES
+            (:pedido_id, :produto_id, :quantidade, :preco, 'carrinho', :observacao)";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ":pedido_id"=>$pedido_id,
         ":produto_id"=>$produto_id,
+        ":quantidade"=>$quantidade,
+        ":preco"=>$preco,
         ":observacao"=>$observacao
     ]);
 
-    $itemExistente = $stmt->fetch(PDO::FETCH_ASSOC);
+    /* =======================================
+       SE FOI O PRIMEIRO ITEM → MARCA MESA
+    ======================================= */
 
-    if($itemExistente){
+    if($pedido_criado_agora){
 
-        // 🔥 SOMA quantidade
-        $sql = "UPDATE pedido_itens
-                SET quantidade = quantidade + :quantidade
-                WHERE id = :id";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ":quantidade"=>$quantidade,
-            ":id"=>$itemExistente['id']
-        ]);
-
-    }else{
-
-        // 🆕 INSERE novo item
-        $sql = "INSERT INTO pedido_itens
-                (pedido_id, produto_id, quantidade, preco, status, observacao)
-                VALUES
-                (:pedido_id, :produto_id, :quantidade, :preco, 'carrinho', :observacao)";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ":pedido_id"=>$pedido_id,
-            ":produto_id"=>$produto_id,
-            ":quantidade"=>$quantidade,
-            ":preco"=>$preco,
-            ":observacao"=>$observacao
+        $pdo->prepare("
+            UPDATE mesas 
+            SET status='ocupada', data_abertura = NOW()
+            WHERE id=:mesa_id
+        ")->execute([
+            ":mesa_id"=>$mesa_id
         ]);
     }
-
-    // Marca mesa ocupada
-    $sql = "UPDATE mesas SET status='ocupada' WHERE id=:mesa_id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([":mesa_id"=>$mesa_id]);
 
     echo json_encode(["success"=>true]);
 

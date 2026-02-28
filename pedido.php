@@ -9,27 +9,53 @@ if(!isset($_SESSION['usuario_id'])){
 
 require "config/conexao.php";
 
-if(!isset($_GET['id'])){
+$mesa_id = intval($_GET['mesa_id'] ?? 0);
+
+if($mesa_id <= 0){
     header("Location: dashboard.php");
     exit;
 }
 
-$pedido_id = intval($_GET['id']);
-$mesa_id   = intval($_GET['mesa_id'] ?? 0);
-
-if($mesa_id <= 0){
-
-$sql = "SELECT mesa_id FROM pedidos WHERE id=:pedido_id LIMIT 1";
+// 🔎 verificar se já existe pedido aberto
+$sql = "
+SELECT id FROM pedidos
+WHERE mesa_id = :mesa_id
+AND status = 'aberto'
+LIMIT 1
+";
 
 $stmt = $pdo->prepare($sql);
-
 $stmt->execute([
-":pedido_id"=>$pedido_id
+    ":mesa_id" => $mesa_id
 ]);
 
-$mesa_id = $stmt->fetchColumn();
+$pedido_id = $stmt->fetchColumn();
+
+// 🆕 se não existir, criar automaticamente
+if(!$pedido_id){
+
+    $sql = "
+    INSERT INTO pedidos (mesa_id, usuario_id, status)
+    VALUES (:mesa_id, :usuario_id, 'aberto')
+    RETURNING id
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ":mesa_id" => $mesa_id,
+        ":usuario_id" => $_SESSION['usuario_id']
+    ]);
+
+    $pedido_id = $stmt->fetchColumn();
+
+    // marcar mesa como ocupada
+    $pdo->prepare("
+        UPDATE mesas SET status='ocupada'
+        WHERE id=:mesa_id
+    ")->execute([":mesa_id"=>$mesa_id]);
 
 }
+
 
 /* BUSCAR GRUPOS */
 
@@ -393,6 +419,41 @@ background:#c0392b;
 
 }
 
+/* ===================== */
+/* TOPO ESTILO PDV       */
+/* ===================== */
+
+.pdv-topo{
+    background:#1f3a5c;
+    color:white;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+}
+
+.pdv-info{
+    display:flex;
+    gap:30px;
+    font-size:16px;
+}
+
+.btn-sair-pdv{
+    background:#e74c3c;
+    border:none;
+    padding:8px 14px;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.btn-sair-pdv:hover{
+    background:#c0392b;
+}
+
+
+
 
 </style>
 
@@ -400,13 +461,15 @@ background:#c0392b;
 
 <body>
 
-<div class="topo">
+<div class="pdv-topo">
 
-<button class="btn-voltar" onclick="voltarMesas()">←</button>
-
-<div class="titulo">
-Pedido #<?php echo $pedido_id; ?>
+<div class="pdv-info">
+    <div><strong>Mesa:</strong> <?php echo $mesa_id; ?></div>
+    <div><strong>Pedido:</strong> #<?php echo $pedido_id; ?></div>
+    <div><strong>Tempo:</strong> <span id="tempoMesa">00:00:00</span></div>
 </div>
+
+<button class="btn-sair-pdv" onclick="voltarMesas()">Sair</button>
 
 </div>
 

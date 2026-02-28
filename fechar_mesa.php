@@ -309,15 +309,21 @@ Voltar
 
 <div class="modal">
 
-<h3>Confirmar fechamento?</h3>
+<h3>Forma de pagamento</h3>
 
-<button class="btn btn-fechar" onclick="confirmarFechamento()">
-Confirmar
-</button>
+<div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
 
-<button class="btn btn-voltar" onclick="fecharModal()">
-Cancelar
-</button>
+<button class="btn btn-fechar" onclick="pagar('pix')">PIX</button>
+
+<button class="btn" style="background:#27ae60;color:white;" onclick="pagar('dinheiro')">DINHEIRO</button>
+
+<button class="btn" style="background:#2980b9;color:white;" onclick="pagar('credito')">CRÉDITO</button>
+
+<button class="btn" style="background:#8e44ad;color:white;" onclick="pagar('debito')">DÉBITO</button>
+
+</div>
+
+<button class="btn btn-voltar" onclick="fecharModal()">Cancelar</button>
 
 </div>
 
@@ -326,35 +332,34 @@ Cancelar
 <script>
 
 function abrirModal(){
-
-document.getElementById("modal").style.display="flex";
-
+    document.getElementById("modal").style.display="flex";
 }
 
 function fecharModal(){
-
-document.getElementById("modal").style.display="none";
-
+    document.getElementById("modal").style.display="none";
 }
 
-function confirmarFechamento(){
+function pagar(tipo){
 
-let form = new FormData();
+    let form = new FormData();
+    form.append("pedido_id","<?php echo $pedido_id; ?>");
+    form.append("forma_pagamento", tipo);
 
-form.append("pedido_id","<?php echo $pedido_id; ?>");
+    fetch("api/fechar_mesa.php",{
+        method:"POST",
+        body:form
+    })
+    .then(res=>res.json())
+    .then(data=>{
 
-fetch("api/fechar_mesa.php",{
+        if(data.success){
+            alert("Mesa fechada com sucesso!\nTotal: R$ " + parseFloat(data.total).toFixed(2));
+            window.location="dashboard.php";
+        }else{
+            alert("Erro: " + data.message);
+        }
 
-method:"POST",
-body:form
-
-})
-.then(res=>res.json())
-.then(()=>{
-
-window.location="dashboard.php";
-
-});
+    });
 
 }
 

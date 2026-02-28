@@ -264,26 +264,44 @@ Voltar
 
 
 </div>
+
+
 <script>
 
 function adicionarPedido(){
-
     fetch("api/buscar_pedido.php?mesa_id=<?php echo $mesa_id; ?>")
     .then(res=>res.json())
     .then(data=>{
-
         window.location="pedido.php?id="+data.pedido_id;
-
     });
-
 }
 
 function fecharMesa(){
 
-    window.location = "fechar_mesa.php?pedido_id=<?php echo $pedido_id; ?>";
+    let forma = prompt("Forma de pagamento:\n\npix\ndinheiro\ncredito\ndebito");
+
+    if(!forma) return;
+
+    fetch("api/fechar_mesa.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "pedido_id=<?php echo $pedido_id; ?>&forma_pagamento=" + forma
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            alert("Mesa fechada com sucesso!\nTotal: R$ " + parseFloat(data.total).toFixed(2));
+            window.location = "dashboard.php";
+        }else{
+            alert("Erro ao fechar mesa.");
+        }
+
+    });
 
 }
-
 
 </script>
 

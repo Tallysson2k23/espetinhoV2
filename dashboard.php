@@ -425,10 +425,13 @@ body{
 
 <div class="mesas" id="areaMesas">
 
+
+
 <?php foreach($mesas as $mesa): ?>
 
 <div class="mesa <?php echo $mesa['status']; ?>" 
-     onclick="clicarMesa(<?php echo $mesa['id']; ?>)">
+     data-id="<?php echo $mesa['id']; ?>"
+     onclick="abrirPDV(<?php echo $mesa['id']; ?>)">
 
     Mesa <?php echo $mesa['numero']; ?>
 
@@ -464,6 +467,43 @@ function fecharMenu(){
 }
 
 let mesaSelecionada = null;
+
+function abrirMesaDireto(mesa_id){
+
+    console.log("Clicou na mesa:", mesa_id);
+
+    let form = new FormData();
+    form.append("mesa_id", mesa_id);
+
+    fetch("api/abrir_pedido.php",{
+        method:"POST",
+        body:form
+    })
+    .then(res=>res.text())
+    .then(texto=>{
+
+        console.log("Resposta bruta da API:", texto);
+
+        try{
+            let data = JSON.parse(texto);
+
+            if(data.success){
+                window.location = "pedido.php?mesa_id=" + mesa_id;
+            }else{
+                alert("Erro da API: " + texto);
+            }
+
+        }catch(e){
+            alert("API não retornou JSON válido.\nVeja o console (F12).");
+        }
+
+    })
+    .catch(err=>{
+        alert("Erro de conexão com API");
+        console.log(err);
+    });
+
+}
 
 function clicarMesa(id){
 
@@ -702,8 +742,8 @@ function buscarHorarios(){
         mesas.forEach(mesa=>{
 
             let mesaDiv = document.querySelector(
-                `.mesa[onclick="clicarMesa(${mesa.id})"]`
-            );
+    `.mesa[data-id="${mesa.id}"]`
+);
 
             if(!mesaDiv) return;
 
@@ -790,7 +830,121 @@ if(toast){
 }
 
 });
+function abrirPDV(mesa_id){
+
+    fetch("pedido_modal.php?mesa_id=" + mesa_id)
+    .then(res=>res.text())
+    .then(html=>{
+
+        document.getElementById("pdvConteudo").innerHTML = html;
+        document.getElementById("pdvTitulo").innerText = "Mesa " + mesa_id;
+        document.getElementById("pdvOverlay").style.display = "flex";
+
+    });
+
+}
+function fecharPDV(){
+    document.getElementById("pdvOverlay").style.display = "none";
+    document.getElementById("pdvConteudo").innerHTML = "";
+}
+
+// TORNA FUNÇÃO GLOBAL PARA O MODAL
+window.abrirGrupoPDV = function(grupo_id){
+
+    // pega mesa atual do título
+    let titulo = document.getElementById("pdvTitulo").innerText;
+    let mesa_id = titulo.replace("Mesa ","");
+
+    fetch("api/verificar_ou_criar_pedido.php?mesa_id=" + mesa_id)
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+
+            fetch("produtos_modal.php?pedido_id=" + data.pedido_id +
+                  "&mesa_id=" + mesa_id +
+                  "&grupo_id=" + grupo_id)
+            .then(res => res.text())
+            .then(html => {
+document.getElementById("areaProdutosPDV").innerHTML = html; });
+
+        }else{
+            alert("Erro ao abrir pedido");
+        }
+
+    });
+
+};
+
 </script>
+
+<!-- ========================= -->
+<!-- MODAL PDV CENTRAL        -->
+<!-- ========================= -->
+
+<div id="pdvOverlay" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:5000;
+">
+
+    <div id="pdvJanela" style="
+    width:90%;
+    max-width:1200px;
+    height:95%;
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,0.4);
+    display:flex;
+    flex-direction:column;
+    ">
+
+        <!-- TOPO -->
+        <div style="
+        background:#1f3a5c;
+        color:white;
+        padding:15px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        font-weight:bold;
+        ">
+            <div id="pdvTitulo">
+                PDV
+            </div>
+
+            <button onclick="fecharPDV()" style="
+            background:#e74c3c;
+            border:none;
+            padding:6px 12px;
+            color:white;
+            border-radius:6px;
+            cursor:pointer;
+            ">
+                Fechar
+            </button>
+        </div>
+
+        <!-- CONTEÚDO DINÂMICO -->
+        <div id="pdvConteudo" style="
+        flex:1;
+        overflow:auto;
+        padding:15px;
+        background:#f4f6f8;
+        ">
+        </div>
+
+    </div>
+
+</div>
 
 
 

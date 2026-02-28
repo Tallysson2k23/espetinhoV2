@@ -695,11 +695,16 @@ function abrirMesa(mesa_id){
 
 }
 
+
+
+
+
 function atualizarTimers(){
 
     Object.keys(horariosMesas).forEach(id=>{
 
         let abertura = horariosMesas[id];
+
         let timerDiv = document.getElementById("timer-"+id);
 
         if(!timerDiv) return;
@@ -709,21 +714,10 @@ function atualizarTimers(){
             return;
         }
 
-        let partes = abertura.split(/[- :]/);
-
-        let dataAbertura = new Date(
-            partes[0],
-            partes[1] - 1,
-            partes[2],
-            partes[3],
-            partes[4],
-            partes[5]
-        );
-
+        let dataAbertura = new Date(abertura.replace(' ', 'T'));
         let agora = new Date();
-        let diff = Math.floor((agora - dataAbertura)/1000);
 
-        if(diff < 0) diff = 0;
+        let diff = Math.floor((agora - dataAbertura)/1000);
 
         let horas = Math.floor(diff/3600);
         let minutos = Math.floor((diff%3600)/60);
@@ -787,25 +781,20 @@ function buscarHorarios(){
         mesas.forEach(mesa=>{
 
             let mesaDiv = document.querySelector(
-                `.mesa[data-id="${mesa.id}"]`
-            );
+    `.mesa[data-id="${mesa.id}"]`
+);
 
             if(!mesaDiv) return;
 
+            // Atualiza cor da mesa
             mesaDiv.classList.remove("livre","ocupada");
             mesaDiv.classList.add(mesa.status);
 
-            // CORREÇÃO AQUI
-            if(mesa.status === "ocupada" && mesa.data_abertura){
+            // Atualiza horário
+            if(mesa.status == "ocupada" && mesa.data_abertura){
                 horariosMesas[mesa.id] = mesa.data_abertura;
             } else {
                 horariosMesas[mesa.id] = null;
-
-                // ZERA TIMER VISUALMENTE
-                let timerDiv = document.getElementById("timer-"+mesa.id);
-                if(timerDiv){
-                    timerDiv.innerHTML = "⏱ 00:00:00";
-                }
             }
 
         });
@@ -813,6 +802,7 @@ function buscarHorarios(){
     });
 
 }
+
 
 
 buscarHorarios();
@@ -958,7 +948,7 @@ window.confirmarProduto = function(){
 </script>
 
 <!-- ========================= -->
-<!-- MODAL PDV CENTRAL LIMPO -->
+<!-- MODAL PDV CENTRAL        -->
 <!-- ========================= -->
 
 <div id="pdvOverlay" style="
@@ -974,17 +964,19 @@ align-items:center;
 z-index:5000;
 ">
 
-    <div style="
-    width:95%;
+    <div id="pdvJanela" style="
+    width:90%;
     max-width:1200px;
     height:95%;
     background:white;
     border-radius:12px;
     overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,0.4);
     display:flex;
     flex-direction:column;
     ">
 
+        <!-- TOPO -->
         <div style="
         background:#1f3a5c;
         color:white;
@@ -994,46 +986,34 @@ z-index:5000;
         align-items:center;
         font-weight:bold;
         ">
-            <span id="pdvTitulo">PDV</span>
+            <div id="pdvTitulo">
+                PDV
+            </div>
 
             <button onclick="fecharPDV()" style="
-                background:#e74c3c;
-                border:none;
-                padding:6px 12px;
-                color:white;
-                border-radius:6px;
-                cursor:pointer;
+            background:#e74c3c;
+            border:none;
+            padding:6px 12px;
+            color:white;
+            border-radius:6px;
+            cursor:pointer;
             ">
                 Fechar
             </button>
         </div>
 
-        <iframe id="pdvFrame"
-                style="flex:1;border:none;">
-        </iframe>
+        <!-- CONTEÚDO DINÂMICO -->
+        <div id="pdvConteudo" style="
+        flex:1;
+        overflow:auto;
+        padding:15px;
+        background:#f4f6f8;
+        ">
+        </div>
 
     </div>
 
 </div>
-
-<script>
-
-function abrirPDV(mesa_id){
-
-    document.getElementById("pdvTitulo").innerText = "Mesa " + mesa_id;
-
-    document.getElementById("pdvFrame").src =
-        "pedido_modal.php?mesa_id=" + mesa_id;
-
-    document.getElementById("pdvOverlay").style.display = "flex";
-}
-
-function fecharPDV(){
-    document.getElementById("pdvOverlay").style.display = "none";
-    document.getElementById("pdvFrame").src = "";
-}
-
-</script>
 
 
 <script>
@@ -1061,74 +1041,7 @@ window.abrirCarrinhoMobile = function(){
 
 </script>
 
-<script>
 
-// =============================
-// FECHAR PDV
-// =============================
-window.fecharPDV = function(){
-    document.getElementById("pdvOverlay").style.display = "none";
-    document.getElementById("pdvConteudo").innerHTML = "";
-};
-
-// =============================
-// ABRIR CARRINHO MOBILE
-// =============================
-window.abrirCarrinhoMobile = function(){
-    const carrinho = document.querySelector(".pdv-right");
-    if(carrinho){
-        carrinho.style.display = "flex";
-    }
-};
-
-// =============================
-// FINALIZAR PEDIDO
-// =============================
-window.finalizarPedidoPDV = function(){
-
-    const mesa_id = document.getElementById("pdvTitulo")
-        .innerText.replace("Mesa ","").trim();
-
-    fetch("api/verificar_ou_criar_pedido.php?mesa_id=" + mesa_id)
-    .then(res => res.json())
-    .then(data => {
-
-        if(!data.success){
-            alert("Erro ao buscar pedido.");
-            return;
-        }
-
-        window.location = "fechar_mesa.php?pedido_id=" + data.pedido_id;
-
-    });
-
-};
-
-</script>
-
-<script>
-
-window.finalizarPedidoPDV = function(){
-
-    const mesa_id = document.getElementById("pdvTitulo")
-        .innerText.replace("Mesa ","").trim();
-
-    fetch("api/verificar_ou_criar_pedido.php?mesa_id=" + mesa_id)
-    .then(res => res.json())
-    .then(data => {
-
-        if(!data.success){
-            alert("Erro ao buscar pedido.");
-            return;
-        }
-
-        window.location = "fechar_mesa.php?pedido_id=" + data.pedido_id;
-
-    });
-
-};
-
-</script>
 
 </body>
 </html>

@@ -27,6 +27,7 @@ pedido_itens.quantidade,
 pedido_itens.preco,
 (pedido_itens.quantidade * pedido_itens.preco) as total
 
+
 FROM pedido_itens
 JOIN produtos ON produtos.id = pedido_itens.produto_id
 
@@ -285,6 +286,7 @@ R$ <?php echo number_format($item['total'],2,',','.'); ?>
 </div>
 
 </div>
+
 
 
 <?php endforeach; ?>
